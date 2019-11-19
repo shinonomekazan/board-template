@@ -20,3 +20,9 @@ KANBANボードを自動的に作成し、そこにあらかじめIssueを登録
 ## 使い方
 
 TODO: 考え中
+
+## LICENSE
+
+MITです。
+
+詳しくは[LICENSE](./LICENSE)をご参照ください。
