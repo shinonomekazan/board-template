@@ -1,3 +1,16 @@
+export interface ExecutorOptions {
+	driver: "github";
+}
+
+export interface GitHubExecutorOptions extends ExecutorOptions {
+	token: string;
+	owner: string;
+	repository: string;
+	templateFile: string;
+	projectName: string;
+	wait: number;
+}
+
 export interface CreateIssueParameters {
 	name: string;
 	description?: string;

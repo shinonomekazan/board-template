@@ -2,12 +2,20 @@ import * as types from "./types";
 import Driver from "./Driver";
 import * as Octokit from "@octokit/rest";
 
+function wait(ms: number): Promise<void> {
+	if (ms === 0) return Promise.resolve();
+	return new Promise((resolve) => {
+		setTimeout(resolve, ms);
+	});
+}
+
 export default class implements Driver {
 	readonly owner: string;
 	readonly repo: string;
 	readonly client: Octokit;
+	readonly wait: number;
 
-	constructor(owner: string, repo: string, tokenOrClient: string | Octokit) {
+	constructor(owner: string, repo: string, tokenOrClient: string | Octokit, wait: number) {
 		this.owner = owner;
 		this.repo = repo;
 		if (typeof tokenOrClient === "string") {
@@ -17,6 +25,7 @@ export default class implements Driver {
 		} else {
 			this.client = tokenOrClient;
 		}
+		this.wait = wait;
 	}
 
 	async createBoard(params: types.CreateBoardParameters): Promise<types.CreateBoardResult> {
@@ -34,6 +43,7 @@ export default class implements Driver {
 			for (let i = 0; i < params.columns.length; i++) {
 				const createColumnParameters = params.columns[i];
 				// TODO: implement attach automation
+				await wait(this.wait);
 				const columnResult = await this.client.projects.createColumn({
 					project_id: result.id,
 					name: createColumnParameters.name,
@@ -46,6 +56,7 @@ export default class implements Driver {
 	}
 
 	async createIssue(params: types.CreateIssueParameters): Promise<types.CreateIssueResult> {
+		await wait(this.wait);
 		const issueResult = await this.client.issues.create({
 			owner: this.owner,
 			repo: this.repo,
@@ -54,6 +65,7 @@ export default class implements Driver {
 			labels: params.labels,
 			assignees: params.assignee == null ? undefined : [params.assignee],
 		});
+		await wait(this.wait);
 		const cardResult = await this.client.projects.createCard({
 			column_id: params.columnId,
 			content_id: issueResult.data.id,
