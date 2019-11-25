@@ -1,6 +1,6 @@
 import * as commander from "commander";
 import "dotenv/config";
-// import Executor from "./Executor";
+import Executor from "./Executor";
 import { GitHubExecutorOptions } from "./types";
 import ProjectTemplate from "./ProjectTemplate";
 import * as readline from "readline";
@@ -18,12 +18,13 @@ export async function run(argv: string[]) {
 
 	const options: GitHubExecutorOptions = {
 		driver: "github",
+		checkRateLimit: true,
 		token: commander.token || process.env.GITHUB_TOKEN,
 		owner: commander.owner || process.env.GITHUB_REPOSITORY,
 		repository: commander.repository || process.env.GITHUB_REPOSITORY,
 		templateFile: commander.templateFile || process.env.PROJECT_TEMPLATE_FILE,
 		projectName: commander.projectName,
-		wait: parseInt(commander.wait || process.env.WAIT || 0, 10),
+		wait: parseInt(commander.wait || process.env.WAIT || 50, 10),
 	};
 
 	const prompt = new Prompt();
@@ -60,10 +61,9 @@ export async function run(argv: string[]) {
 	console.log(`-- wait setting is ${options.wait}`);
 	try {
 		const template = await projectTemplate.parse()
-		// const executor = new Executor(options);
-		// await executor.execute();
-		console.log(template);
-		// console.log(template);
+		console.log(JSON.stringify(template, undefined, "  "));
+		const executor = new Executor(options);
+		await executor.execute();
 		console.log("finished");
 	} catch (error) {
 		console.error(error);

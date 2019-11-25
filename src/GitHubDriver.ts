@@ -76,4 +76,12 @@ export default class implements Driver {
 			issueIdOnBoard: cardResult.data.id,
 		}
 	}
+
+	async getRateLimit() {
+		const rateLimit = await this.client.rateLimit.get();
+		return {
+			core: rateLimit.data.resources.core,
+			rate: rateLimit.data.rate,
+		};
+	}
 }

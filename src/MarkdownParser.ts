@@ -16,11 +16,41 @@ interface State {
 	level?: number;
 }
 
+export class Block {
+	type: ContentType;
+	body: string;
+	title: string;
+	indent: number;
+	level?: number;
+	children: Block[];
+	parent?: Block;
+
+	constructor(state: State) {
+		this.type = state.type;
+		this.title = state.title;
+		this.body = state.body.join("\n");
+		this.indent = state.indent;
+		this.level = state.level == null ? undefined : state.level;
+		this.children = [];
+	}
+
+	toJSON() {
+		return {
+			type: this.type,
+			body: this.body,
+			title: this.title,
+			indent: this.indent,
+			level: this.level,
+			children: this.children,
+		};
+	}
+}
+
 export function parse(data: string) {
 	const state: State[] = [];
 	let currentState: State | null = null;
 	let preMode = false;
-	// currentStateがNULLの時に死ぬ
+	// TDOO: currentStateがNULLの時に死ぬ（いまいち）
 	data.split(/\r\n|\r|\n/g).forEach((line) => {
 		if (preMode) {
 			currentState!.body.push(parseIndentAndContent(line).content);
@@ -36,7 +66,10 @@ export function parse(data: string) {
 				preMode = ! preMode;
 				break;
 			case ContentType.Empty:
-				// 空行無視（ほんとは意味あるけど）
+				// 空行はコンテンツが場合に空行挿入
+				if (currentState!.body.length > 0) {
+					currentState!.body.push("");
+				}
 				break;
 			case ContentType.Content:
 				currentState!.body.push(content);
@@ -63,7 +96,7 @@ export function parse(data: string) {
 		}
 	});
 
-	const root = new Hoge({
+	const root = new Block({
 		type: ContentType.Heading,
 		title: "",
 		body: [""],
@@ -72,55 +105,25 @@ export function parse(data: string) {
 	});
 	let current = root;
 	state.forEach((s) => {
-		const stateOfHoge = new Hoge(s);
+		const stateOfBlock = new Block(s);
 		if (s.type === ContentType.Heading) {
 			while (current.type !== ContentType.Heading || s.level! <= current.level!) {
 				current = current.parent!;
 			}
-			current.children.push(stateOfHoge);
-			stateOfHoge.parent = current;
-			current = stateOfHoge;
+			current.children.push(stateOfBlock);
+			stateOfBlock.parent = current;
+			current = stateOfBlock;
 		} else if (s.type === ContentType.List) {
 			while (current.type === ContentType.List && s.indent <= current.indent) {
 				current = current.parent!;
 			}
-			current.children.push(stateOfHoge);
-			stateOfHoge.parent = current;
-			current = stateOfHoge;
+			current.children.push(stateOfBlock);
+			stateOfBlock.parent = current;
+			current = stateOfBlock;
 		}
 	});
 
 	return root.children;
-}
-
-class Hoge {
-	type: ContentType;
-	body: string;
-	title: string;
-	indent: number;
-	level?: number;
-	children: Hoge[];
-	parent?: Hoge;
-
-	constructor(state: State) {
-		this.type = state.type;
-		this.title = state.title;
-		this.body = state.body.join("\n");
-		this.indent = state.indent;
-		this.level = state.level == null ? undefined : state.level;
-		this.children = [];
-	}
-
-	toJSON() {
-		return {
-			type: this.type,
-			body: this.body,
-			title: this.title,
-			indent: this.indent,
-			level: this.level,
-			children: this.children,
-		};
-	}
 }
 
 export function parseIndentAndContent(line: string) {

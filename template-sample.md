@@ -1,4 +1,4 @@
-# project-template-sample
+# board-template-sample
 
 hogehoge
 

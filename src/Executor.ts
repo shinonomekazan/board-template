@@ -23,6 +23,12 @@ export default class Executor {
 			options.wait,
 		);
 
+		if (options.checkRateLimit) {
+			const rateLimit = await driver.getRateLimit();
+			// TODO: あとで
+			if (rateLimit != null) return;
+		}
+
 		const boardResult = await driver.createBoard({
 			name: "hoge",
 			description: "fuga",

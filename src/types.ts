@@ -9,6 +9,7 @@ export interface GitHubExecutorOptions extends ExecutorOptions {
 	templateFile: string;
 	projectName: string;
 	wait: number;
+	checkRateLimit: boolean;
 }
 
 export interface CreateIssueParameters {
