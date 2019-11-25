@@ -4,18 +4,16 @@ hogehoge
 
 ## columns
 
-- 1st column
-	- this is first column
+- 1st column: this is first column
 - 2nd column
 - 3rd column
-	- this is the third column.
 
 ## issues
 
 ### 1st column
 
 - list is issue
-- top level is title
+- top level is tiztle
 	- second level is description
 - parameters
 	- description!
@@ -33,7 +31,7 @@ hogehoge
 
 	[GItHub](https://github.com)
 	```
-- abcdeff
+- one line description: this is description
 
 ### 2nd column
 

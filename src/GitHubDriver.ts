@@ -62,10 +62,20 @@ export default class implements Driver {
 			repo: this.repo,
 			title: params.name,
 			body: params.description,
-			labels: params.labels,
+			// TODO: ここでラベルを付けると、存在するラベルの場合にエラーになる
+			// labels: params.labels,
 			assignees: params.assignee == null ? undefined : [params.assignee],
 		});
 		await wait(this.wait);
+		// TODO: updateで設定してもlabelの挙動は同様でお手上げ
+		// if (params.labels != null && params.labels.length > 0) {
+		// 	await this.client.issues.update({
+		// 		owner: this.owner,
+		// 		repo: this.repo,
+		// 		issue_number: issueResult.data.number,
+		// 		labels: params.labels,
+		// 	});
+		// }
 		const cardResult = await this.client.projects.createCard({
 			column_id: params.columnId,
 			content_id: issueResult.data.id,

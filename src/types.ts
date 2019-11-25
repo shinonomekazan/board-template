@@ -41,3 +41,22 @@ export interface CreateIssueResult {
 	id: number;
 	issueIdOnBoard: number;
 }
+
+export interface IssueTemplate {
+	title: string;
+	body: string;
+	assignee?: string;
+	labels?: string[];
+}
+
+export interface ColumnTemplate {
+	title: string;
+	body: string;
+	issues: IssueTemplate[];
+}
+
+export interface Template {
+	title: string;
+	body: string;
+	columns: ColumnTemplate[];
+}

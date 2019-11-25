@@ -8,14 +8,17 @@ export default class Executor {
 		this.options = options;
 	}
 
-	async execute() {
+	async execute(template: types.Template) {
 		if (this.options.driver === "github") {
-			return this.executeGitHub(this.options as types.GitHubExecutorOptions);
+			return this.executeGitHub(
+				template,
+				this.options as types.GitHubExecutorOptions,
+			);
 		}
 		throw new Error("Invalid driver");
 	}
 
-	async executeGitHub(options: types.GitHubExecutorOptions) {
+	async executeGitHub(template: types.Template, options: types.GitHubExecutorOptions) {
 		const driver = new GitHubDriver(
 			options.owner,
 			options.repository,
@@ -25,33 +28,36 @@ export default class Executor {
 
 		if (options.checkRateLimit) {
 			const rateLimit = await driver.getRateLimit();
-			// TODO: あとで
-			if (rateLimit != null) return;
+			console.log("dump rate limit", rateLimit);
 		}
 
+		console.log("creating board...");
 		const boardResult = await driver.createBoard({
-			name: "hoge",
-			description: "fuga",
-			columns: [
-				{
-					name: "1st column",
-					description: "this is first column",
-				},
-				{
-					name: "2nd column",
-				},
-				{
-					name: "3rd column",
-					description: "this is the third column",
-				},
-			],
+			name: options.projectName || template.title,
+			description: template.body,
+			columns: template.columns.map((column) => ({
+				name: column.title,
+				description: column.body,
+			})),
 		});
-		const columnId = boardResult.columnIdMap["1st column"];
-		await driver.createIssue({
-			name: "issue1",
-			description: "issue description",
-			boardId: boardResult.id,
-			columnId: columnId,
-		});
+		console.log("- created.");
+
+		console.log("creating issues...");
+		// 直列実行のために一度並列展開してからやる
+		const createIssueParameters = template.columns.reduce((p, column) => {
+			const columnId = boardResult.columnIdMap[column.title];
+			return p.concat(column.issues.map((issue) => ({
+				name: issue.title,
+				description: issue.body,
+				boardId: boardResult.id,
+				columnId,
+				assignee: issue.assignee,
+				labels: issue.labels,
+			})));
+		}, [] as types.CreateIssueParameters[]);
+		for (let i = 0; i < createIssueParameters.length; i++) {
+			await driver.createIssue(createIssueParameters[i]);
+			console.log(`- created: ${createIssueParameters[i].name}`);
+		}
 	}
 }

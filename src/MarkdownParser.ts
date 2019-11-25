@@ -1,5 +1,6 @@
 // 軽く書けるならと書いてみたけどあとで消すかも
-export const enum ContentType {
+// 特にpre周りの処理がひどい・・
+export const enum BlockType {
 	Empty,
 	Content,
 	Heading,
@@ -8,8 +9,9 @@ export const enum ContentType {
 	Pre,
 }
 
+// TODO: このStateはBlockに統一できるので後で統合する
 interface State {
-	type: ContentType;
+	type: BlockType;
 	body: string[];
 	title: string;
 	indent: number;
@@ -17,7 +19,7 @@ interface State {
 }
 
 export class Block {
-	type: ContentType;
+	type: BlockType;
 	body: string;
 	title: string;
 	indent: number;
@@ -34,6 +36,14 @@ export class Block {
 		this.children = [];
 	}
 
+	pushToBody(line: string) {
+		if (this.body.length > 0) {
+			this.body += `\n${line}`;
+		} else {
+			this.body = line;
+		}
+	}
+
 	toJSON() {
 		return {
 			type: this.type,
@@ -46,35 +56,36 @@ export class Block {
 	}
 }
 
-export function parse(data: string) {
+export function parse(data: string): Block[] {
 	const state: State[] = [];
 	let currentState: State | null = null;
 	let preMode = false;
 	// TDOO: currentStateがNULLの時に死ぬ（いまいち）
 	data.split(/\r\n|\r|\n/g).forEach((line) => {
 		if (preMode) {
-			currentState!.body.push(parseIndentAndContent(line).content);
 			if (isPre(line)) {
 				preMode = false;
+			} else {
+				currentState!.body.push(parseIndentAndContent(line).content);
 			}
 			return;
 		}
 		const [type, content, indent, level] = parseLine(line);
 		switch (type) {
-			case ContentType.Pre:
-				currentState!.body.push(content);
+			case BlockType.Pre:
+				// currentState!.body.push(content);
 				preMode = ! preMode;
 				break;
-			case ContentType.Empty:
+			case BlockType.Empty:
 				// 空行はコンテンツが場合に空行挿入
 				if (currentState!.body.length > 0) {
 					currentState!.body.push("");
 				}
 				break;
-			case ContentType.Content:
+			case BlockType.Content:
 				currentState!.body.push(content);
 				break;
-			case ContentType.Heading:
+			case BlockType.Heading:
 				currentState = {
 					type,
 					level,
@@ -84,7 +95,7 @@ export function parse(data: string) {
 				};
 				state.push(currentState);
 				break;
-			case ContentType.List:
+			case BlockType.List:
 				currentState = {
 					type,
 					title: content,
@@ -97,7 +108,7 @@ export function parse(data: string) {
 	});
 
 	const root = new Block({
-		type: ContentType.Heading,
+		type: BlockType.Heading,
 		title: "",
 		body: [""],
 		indent: 0,
@@ -106,15 +117,15 @@ export function parse(data: string) {
 	let current = root;
 	state.forEach((s) => {
 		const stateOfBlock = new Block(s);
-		if (s.type === ContentType.Heading) {
-			while (current.type !== ContentType.Heading || s.level! <= current.level!) {
+		if (s.type === BlockType.Heading) {
+			while (current.type !== BlockType.Heading || s.level! <= current.level!) {
 				current = current.parent!;
 			}
 			current.children.push(stateOfBlock);
 			stateOfBlock.parent = current;
 			current = stateOfBlock;
-		} else if (s.type === ContentType.List) {
-			while (current.type === ContentType.List && s.indent <= current.indent) {
+		} else if (s.type === BlockType.List) {
+			while (current.type === BlockType.List && s.indent <= current.indent) {
 				current = current.parent!;
 			}
 			current.children.push(stateOfBlock);
@@ -144,7 +155,7 @@ export function parseIndentAndContent(line: string) {
 }
 
 export type Line = [
-	ContentType, // type
+	BlockType, // type
 	string,   // content
 	number,   // indent
 	number?   // level (見出しの時のみ)
@@ -157,14 +168,14 @@ export function isPre(line: string): boolean {
 // ほんとは前行を見ないとわかんないところが多いんだけど
 export function parseLine(line: string): Line {
 	if (line.length === 0) {
-		return [ContentType.Empty, line, 0];
+		return [BlockType.Empty, line, 0];
 	}
 	const {indent, content} = parseIndentAndContent(line);
 
 	// ちょっと手抜き
 	if (isPre(content)) {
 		return [
-			ContentType.Pre,
+			BlockType.Pre,
 			content,
 			indent,
 		];
@@ -185,7 +196,7 @@ export function parseLine(line: string): Line {
 	const match = content.match(/^([\d]+\.|\-|\#+)(\s+)(\S.+)/s);
 	if (match == null) {
 		return [
-			ContentType.Content,
+			BlockType.Content,
 			content,
 			indent,
 		];
@@ -193,20 +204,20 @@ export function parseLine(line: string): Line {
 	switch (match[1][0]) {
 		case "#":
 			return [
-				ContentType.Heading,
+				BlockType.Heading,
 				match[3],
 				indent,
 				match[1].length,
 			];
 		case "-":
 			return [
-				ContentType.List,
+				BlockType.List,
 				match[3],
 				indent,
 			];
 		default:
 			return [
-				ContentType.List,
+				BlockType.List,
 				match[3],
 				indent,
 			];
