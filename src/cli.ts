@@ -108,7 +108,9 @@ class Prompt {
 		if (this.current == null) {
 			throw new Error("Invalid prompt status");
 		}
-		this.current.resolve(line);
+		const resolve = this.current.resolve;
+		this.current = null;
+		resolve(line);
 	}
 
 	onClose() {
