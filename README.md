@@ -55,6 +55,7 @@ https://help.github.com/ja/github/site-policy/github-terms-of-service#h-api-term
 - columnsの説明の値は一応入れられますが、意味のある値にはなりません
 - Issueのラベル設定はサポートしたいんですが、既存のラベル名を指定するとエラーになって動作しないので諦め中
 	- 誰か助けて
+- GitHub Projectのautomationは現状API経由で設定できなそうなので諦めました
 
 ## LICENSE
 
