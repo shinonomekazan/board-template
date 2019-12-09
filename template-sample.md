@@ -13,7 +13,7 @@ hogehoge
 ### 1st column
 
 - list is issue
-- top level is tiztle
+- top level is title
 	- second level is description
 - parameters
 	- description!
@@ -31,6 +31,15 @@ hogehoge
 
 	[GItHub](https://github.com)
 	```
+- assignee and markdown
+	```
+	Hello hello
+
+	- [ ] hogehoge
+	- [ ] fugafuga
+	```
+	- assignee: tsugehara
+	- labels: one, two
 - one line description: this is description
 
 ### 2nd column
